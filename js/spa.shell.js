@@ -14,6 +14,8 @@ spa.shell = (function(){
                 chat : {opened : true, closed : true}
             },
 
+            resize_interval : 200,
+
             main_html : String()+
         '        <div class="spa-shell-head">'+
         '            <div class="spa-shell-head-logo"></div>'+
@@ -35,8 +37,9 @@ spa.shell = (function(){
             // chat_retracted_title : 'Click to extend'
         },
         stateMap = {
-            // $container:null,
-            anchor_map:{}
+            $container:undefined,
+            anchor_map:{},
+            resize_idto : undefined
             // is_chat_retracted : true
         },
         jqueryMap = {},
@@ -53,6 +56,18 @@ spa.shell = (function(){
           $container:$container
           // $chat : $container.find('.spa-shell-chat')
       };
+    };
+
+    onResize = function(){
+      if(stateMap.resize_idto){
+          return true;
+      }
+      spa.chat.handleResize();
+      stateMap.resize_idto = setTimeout(
+          function(){stateMap.resize_idto = undefined},
+          configMap.resize_interval
+      );
+      return true;
     };
 
     // toggleChat = function (do_extend,callback) {
@@ -209,7 +224,9 @@ spa.shell = (function(){
         });
         spa.chat.initModule(jqueryMap.$container);
 
-        $(window).bind('hashchange',onHashchange)
+        $(window)
+            .bind('resize',onResize)
+            .bind('hashchange',onHashchange)
             .trigger('hashchange');
     };
 
