@@ -123,7 +123,7 @@ spa.model = (function(){
             chat._leave();
             is_removed = removePerson(user);
             stateMap.user = stateMap.anon_user;
-
+            clearPeopleDb();
             $.gevent.publish('spa-logout',[user]);
             return is_removed;
         };
@@ -139,7 +139,14 @@ spa.model = (function(){
 
     chat = (function () {
       var _publish_listchange,_update_list,_leave_chat,join_chat,_publish_updatechat,
-          get_chatee,send_msg,set_chatee,chatee = null;
+          person,update_avatar,get_chatee,send_msg,set_chatee,chatee = null;
+
+      update_avatar = function ( avatar_update_map ){
+          var sio = isFakeData ? spa.fake.mockSio : spa.data.getSio();
+          if (sio){
+              sio.emit('updateavatar' , avatar_update_map);
+          }
+      };
 
       _update_list = function ( arg_list ) {
         var i,person_map,make_person_map,
@@ -163,8 +170,10 @@ spa.model = (function(){
                 id   : person_map._id,
                 name : person_map.name
             };
+            person = makePerson(make_person_map);
             if(chatee && chatee.id === make_person_map.id){
                 is_chatee_online = true;
+                chatee = person;
             }
             makePerson(make_person_map);
         }
@@ -275,7 +284,8 @@ spa.model = (function(){
           join : join_chat,
           get_chatee : get_chatee,
           send_msg : send_msg,
-          set_chatee : set_chatee
+          set_chatee : set_chatee,
+          update_avatar : update_avatar
       }
     }());
 

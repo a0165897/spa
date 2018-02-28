@@ -1,25 +1,36 @@
 // spa.chat.js
 
 spa.chat = (function(){
+    'use strict';
     //module scope variables
     var configMap = {
         main_html : String()
-            + '<div class="spa-chat">'
-            + '<div class="spa-chat-head">'
-            + '<div class="spa-chat-head-toggle">+</div>'
-            + '<div class="spa-chat-head-title">'
-            + 'Chat'
-            + '</div>'
-            + '</div>'
-            + '<div class="spa-chat-closer">x</div>'
-            + '<div class="spa-chat-sizer">'
-            + '<div class="spa-chat-msgs"></div>'
-            + '<div class="spa-chat-box">'
-            + '<input type="text"/>'
-            + '<div>send</div>'
-            + '</div>'
-            + '</div>'
-            + '</div>',
+        + '<div class="spa-chat">'
+        + '<div class="spa-chat-head">'
+        + '<div class="spa-chat-head-toggle">+</div>'
+        + '<div class="spa-chat-head-title">'
+        + 'Chat'
+        + '</div>'
+        + '</div>'
+        + '<div class="spa-chat-closer">x</div>'
+        + '<div class="spa-chat-sizer">'
+        + '<div class="spa-chat-list">'
+        + '<div class="spa-chat-list-box"></div>'
+        + '</div>'
+        + '<div class="spa-chat-msg">'
+        + '<div class="spa-chat-msg-log"></div>'
+        + '<div class="spa-chat-msg-in">'
+        + '<form class="spa-chat-msg-form">'
+        + '<input type="text"/>'
+        + '<input type="submit" style="display:none"/>'
+        + '<div class="spa-chat-msg-send">'
+        + 'send'
+        + '</div>'
+        + '</form>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '</div>',
         settable_map : {
             slider_open_time :true,
             silder_close_time : true,
@@ -39,8 +50,8 @@ spa.chat = (function(){
         slider_closed_em:2,
         slider_opened_min_em : 10,
         window_height_min_em : 20,
-        slider_opened_title:'Click to close',
-        slider_closed_title:'Click to open',
+        slider_opened_title:'Tap to close',
+        slider_closed_title:'Tap to open',
 
         chat_model:null,
         people_model:null,
@@ -56,7 +67,9 @@ spa.chat = (function(){
 
     },
     jqueryMap = {},
-    setJqueryMap,getEmSize,setPxSizes,setSliderPosition,onClickToggle,configModule,initModule;
+    setJqueryMap,getEmSize,setPxSizes,setSliderPosition,onClickToggle,configModule,initModule,
+    scrollChat,writeChat,writeAlert,clearChat,onTapToggle,onSubmitMsg,onTapList,
+    onSetchatee,onUpdatechat,onListchange,onLogin,onLogout;
 
     getEmSize = function (elem){
         return Number(
@@ -74,17 +87,21 @@ spa.chat = (function(){
             $toggle : $slider.find('.spa-chat-head-toggle'),
             $title  : $slider.find('.spa-chat-head-title'),
             $sizer  : $slider.find('.spa-chat-sizer'),
-            $msgs   : $slider.find('.spa-chat-msgs'),
-            $box    : $slider.find('.spa-chat-box'),
-            $input  : $slider.find('.spa-chat-input input[type=text]')
+            $list_box :$slider.find('spa-chat-list-box'),
+            $msg_log : $slider.find('spa-chat-msg-log'),
+            $msg_in : $slider.find('spa-chat-msg-in'),
+            $input : $slider.find('spa-chat-msg-in input[type = text]'),
+            $send : $slider.find('.spa-chat-msg-send'),
+            $form : $slider.find('.spa-chat-msg-form'),
+            $window : $(window)
         };
     };
 
     setPxSizes = function(){
         var px_per_em,opened_height_em,window_height_em;
-        px_per_em = getEmSize(jqueryMap.$slider.get(0));
+        px_per_em = spa.util_b.getEmSize(jqueryMap.$slider.get(0));
         window_height_em = Math.floor(
-            0.5+($(window).height() / px_per_em)
+            0.5+(jqueryMap.$window.height() / px_per_em)
         );
 
         opened_height_em = window_height_em>configMap.window_height_min_em?configMap.slider_opened_em:configMap.slider_opened_min_em;
@@ -112,7 +129,14 @@ spa.chat = (function(){
     setSliderPosition = function (position_type , callback){
         var height_px,animate_time,slider_title,toggle_text;
 
+        if(position_type === 'opened' && configMap.people_model.get_user().get_is_anon()){
+            return false;
+        }
+
         if(stateMap.position_type === position_type){
+            if(position_type ==='opened'){
+                jqueryMap.$input.focus();
+            }
             return true;
         }
 
@@ -122,6 +146,7 @@ spa.chat = (function(){
                 animate_time = configMap.slider_open_time;
                 slider_title = configMap.slider_opened_title;
                 toggle_text = '=';
+                jqueryMap.$input.focus();
                 break;
 
             case 'hidden':
@@ -157,6 +182,25 @@ spa.chat = (function(){
         );
         return true;
     };
+
+    scrollChat = function () {
+      var $msg_log = jqueryMap.$msg_log;
+      $msg_log.animate({scrollTop:$msg_log.prop('scrollHeight') - $msg_log.height()},150);
+    };
+
+    writeChat = function (person_name, text , is_user) {
+        var msg_class = is_user
+        ? 'spa-chat-msg-log-me':'spa-chat-msg-log-msg';
+
+        jqueryMap.$msg_log.append(
+            '<div class="' + msg_class + '">'
+            + spa.util_b.encodeHtml(person_name) + ': '
+            + spa.util_b.encodeHtml(text) + '</div>'
+        );
+        scrollChat();
+    };
+
+
 
     onClickToggle = function(event){
       var set_chat_anchor = configMap.set_chat_anchor;
