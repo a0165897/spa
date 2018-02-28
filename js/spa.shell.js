@@ -34,7 +34,11 @@ spa.shell = (function(){
         // '        <div class="spa-shell-chat"></div>'+//*
         '        <div class="spa-shell-modal"></div>'
             // chat_extend_time : 600,
-            // chat_retract_time : 300,
+            // chat_retract_tim
+            //
+            //
+            //
+            // e : 300,
             // chat_extend_height : 450,
             // chat_retract_height:15,
             // chat_extended_title : 'Click to retract',
