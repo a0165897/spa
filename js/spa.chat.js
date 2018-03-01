@@ -67,7 +67,7 @@ spa.chat = (function(){
 
     },
     jqueryMap = {},
-    setJqueryMap,getEmSize,setPxSizes,setSliderPosition,onClickToggle,configModule,initModule,
+    setJqueryMap,getEmSize,setPxSizes,handleResize,removeSlider,setSliderPosition,onClickToggle,configModule,initModule,
     scrollChat,writeChat,writeAlert,clearChat,onTapToggle,onSubmitMsg,onTapList,
     onSetchatee,onUpdatechat,onListchange,onLogin,onLogout;
 
@@ -370,7 +370,6 @@ spa.chat = (function(){
     };
 
     initModule = function($append_target){
-        alert(333);
         var $list_box;
         stateMap.$append_target = $append_target;
         $append_target.append(configMap.main_html);
@@ -379,19 +378,16 @@ spa.chat = (function(){
 
         jqueryMap.$toggle.prop('title',configMap.slider_closed_title);
         stateMap.position_type = 'closed';
-alert(555);
         $list_box = jqueryMap.$list_box;
         $.gevent.subscribe($list_box,'spa-listchange',onListchange);
         $.gevent.subscribe($list_box,'spa-setchatee',onSetchatee);
         $.gevent.subscribe($list_box,'spa-updatechat',onUpdatechat);
         $.gevent.subscribe($list_box,'spa-login',onLogin);
         $.gevent.subscribe($list_box,'spa-logout',onLogout);
-alert(666);
         jqueryMap.$head.bind('utap', onTapToggle);
         jqueryMap.$list_box.bind('utap',onTapList);
         jqueryMap.$send.bind('utap',onSubmitMsg);
         jqueryMap.$form.bind('submit',onSubmitMsg);
-    alert(777);
     };
 
     return {
