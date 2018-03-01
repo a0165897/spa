@@ -14,13 +14,14 @@
 spa.fake = (function () {
     'use strict';
     var peopleList,fakeIdSerial,makeFakeId,mockSio;
+
     fakeIdSerial = 5;
+
     makeFakeId = function (){
       return 'id_'+String(fakeIdSerial++);
     };
     peopleList = [
-            {
-                name : 'Betty', _id : 'id_01',
+            { name : 'Bacy', _id : 'id_01',
                 css_map : {top : 20, left : 20,
                     'background-color' : 'rgb(128,128,128)'
                 }
@@ -43,7 +44,10 @@ spa.fake = (function () {
             }
         ];
     mockSio = (function(){
-        var on_sio,emit_mock_msg,emit_sio,send_listchange,listchange_ldto,callback_map = {};
+        var on_sio, emit_sio, emit_mock_msg,
+            send_listchange, listchange_idto,
+            callback_map = {};
+
 
         on_sio = function (msg_type , callback) {
             callback_map[msg_type] = callback;
@@ -51,6 +55,8 @@ spa.fake = (function () {
 
         emit_sio = function (msg_type , data) {
             var person_map,i;
+
+            //作为 adduser事件 的回调
             if (msg_type === 'adduser' && callback_map.userupdate){
                 setTimeout(function () {
                     person_map = {
@@ -60,8 +66,10 @@ spa.fake = (function () {
                     };
                     peopleList.push(person_map);
                     callback_map.userupdate([person_map]);
-                },3000);
+                },500);
             }
+
+            //作为 updatechat事件 的回调
             if(msg_type === 'updatechat' && callback_map.updatechat){
                 setTimeout(function () {
                     var user = spa.model.people.get_user();
@@ -71,27 +79,31 @@ spa.fake = (function () {
                         sender_id : data.dest_id,
                         msg_text : 'Thankes for the note, ' + user.name
                     }]);
-                },2000)
+                },1000)
             }
+
+            //重置
             if( msg_type === 'leavechat' ){
                 delete callback_map.listchange;
                 delete callback_map.updatechat;
 
-                if (listchange_ldto){
-                    clearTimeout(listchange_ldto);
-                    listchange_ldto = undefined;
+                if (listchange_idto){
+                    clearTimeout(listchange_idto);
+                    listchange_idto = undefined;
                 }
                 send_listchange();
             }
 
+            //模拟发送数据到服务器
             if(msg_type === 'updateavatar' && callback_map.listchange) {
+                //模拟服务器接收
                 for ( i=0; i<peopleList.length ; i++){
                     if(peopleList[i]._id === data.person_id){
                         peopleList[i].css_map = data.css_map;
                         break;
                     }
                 }
-
+                //执行 listchange事件 的回调
                 callback_map.listchange([peopleList]);
             }
         };
@@ -110,15 +122,15 @@ spa.fake = (function () {
               else{
                   emit_mock_msg();
               }
-          },8000);
+          },3000);
         };
 
         send_listchange = function () {
-          listchange_ldto = setTimeout(function(){
+           listchange_idto = setTimeout(function(){
               if (callback_map.listchange){
                   callback_map.listchange([peopleList]);
                   emit_mock_msg();
-                  listchange_ldto = undefined;
+                  listchange_idto = undefined;
               }
               else{
                   send_listchange();
@@ -127,7 +139,10 @@ spa.fake = (function () {
         };
 
         send_listchange();
-        return {emit : emit_sio, on : on_sio};
+        return {
+            emit : emit_sio,
+            on : on_sio
+        };
     }());
     return {
         mockSio : mockSio
